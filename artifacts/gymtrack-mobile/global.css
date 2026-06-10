@@ -1,0 +1,9 @@
+/* Hide scrollbars on web while keeping scroll functionality */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
