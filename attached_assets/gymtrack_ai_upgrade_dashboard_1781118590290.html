@@ -1,0 +1,456 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.tabs { display: flex; gap: 4px; padding: 0 0 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.5rem; }
+.tab { padding: 6px 14px; border-radius: var(--border-radius-md); font-size: 13px; border: 0.5px solid var(--color-border-secondary); cursor: pointer; background: transparent; color: var(--color-text-secondary); transition: all 0.15s; }
+.tab.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+.tab:hover:not(.active) { background: var(--color-background-secondary); }
+.screen { display: none; }
+.screen.active { display: block; }
+.section-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: var(--border-radius-md); font-weight: 500; }
+.badge-green { background: #EAF3DE; color: #3B6D11; }
+.badge-blue { background: #E6F1FB; color: #185FA5; }
+.badge-amber { background: #FAEEDA; color: #854F0B; }
+.badge-purple { background: #EEEDFE; color: #534AB7; }
+.badge-coral { background: #FAECE7; color: #993C1D; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.exercise-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.exercise-row:last-child { border-bottom: none; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.progress-bar { height: 6px; border-radius: 3px; background: var(--color-background-secondary); overflow: hidden; margin-top: 6px; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.set-row { display: grid; grid-template-columns: 32px 1fr 1fr 60px; gap: 8px; align-items: center; padding: 8px 0; font-size: 13px; }
+.set-done { opacity: 0.6; }
+.check-circle { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.check-circle.done { background: #639922; border-color: #639922; color: #fff; }
+.input-mini { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 4px 8px; font-size: 13px; width: 100%; text-align: center; color: var(--color-text-primary); }
+.ai-chip { display: inline-flex; align-items: center; gap: 5px; background: #EEEDFE; color: #534AB7; border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 500; }
+.chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.bar { width: 100%; border-radius: 3px 3px 0 0; background: #5DCAA5; transition: height 0.3s; }
+.bar-label { font-size: 10px; color: var(--color-text-tertiary); }
+.muscle-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.muscle-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
+.muscle-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.muscle-name { font-size: 13px; color: var(--color-text-primary); flex: 1; }
+.muscle-pct { font-size: 12px; color: var(--color-text-secondary); }
+.timer-display { font-size: 48px; font-weight: 500; color: var(--color-text-primary); font-variant-numeric: tabular-nums; text-align: center; padding: 1.5rem 0; }
+.timer-btns { display: flex; gap: 8px; justify-content: center; }
+.btn { padding: 8px 16px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); font-size: 13px; cursor: pointer; }
+.btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+.btn-danger { background: #F09595; color: #501313; border-color: transparent; }
+.body-chart { position: relative; height: 160px; }
+.body-hotspot { position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: 500; cursor: pointer; }
+.suggestion-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; margin-bottom: 8px; }
+.suggestion-card:hover { background: var(--color-background-secondary); }
+.streak-row { display: flex; gap: 4px; align-items: center; margin-top: 6px; }
+.streak-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--color-background-secondary); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--color-text-tertiary); }
+.streak-dot.done { background: #639922; color: #fff; }
+.streak-dot.today { background: #5DCAA5; color: #fff; }
+.share-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; background: var(--color-background-primary); }
+.share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.share-stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; }
+.pr-badge { display: inline-flex; align-items: center; gap: 4px; background: #FAEEDA; color: #854F0B; border-radius: var(--border-radius-md); padding: 3px 8px; font-size: 11px; font-weight: 500; margin-top: 4px; }
+</style>
+
+<h2 class="sr-only">GymTrack App — feature preview showing updated screens: home, active workout, AI suggestions, progress analytics, and social sharing</h2>
+
+<div style="padding: 1rem 0;">
+  <div class="row-between" style="margin-bottom: 1rem;">
+    <div>
+      <div style="font-size: 18px; font-weight: 500; color: var(--color-text-primary);">GymTrack — updated features</div>
+      <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 2px;">Click the tabs to preview each screen</div>
+    </div>
+    <div class="ai-chip"><i class="ti ti-sparkles" aria-hidden="true"></i> AI-powered</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show('home')">Home</button>
+    <button class="tab" onclick="show('workout')">Active workout</button>
+    <button class="tab" onclick="show('ai')">AI coach</button>
+    <button class="tab" onclick="show('progress')">Progress</button>
+    <button class="tab" onclick="show('social')">Share</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-label">Streak</div>
+        <div class="metric-value">12 🔥</div>
+        <div class="metric-sub">days</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">This week</div>
+        <div class="metric-value">3/4</div>
+        <div class="metric-sub">workouts</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Volume</div>
+        <div class="metric-value">8.4K</div>
+        <div class="metric-sub">kg total</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">PRs set</div>
+        <div class="metric-value">2</div>
+        <div class="metric-sub">this week</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-between" style="margin-bottom: 10px;">
+        <div style="font-size: 14px; font-weight: 500; color: var(--color-text-primary);">Weekly goal</div>
+        <span class="badge badge-green">On track</span>
+      </div>
+      <div class="streak-row">
+        <div class="streak-dot done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+        <div class="streak-dot done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+        <div class="streak-dot done"><i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i></div>
+        <div class="streak-dot today" style="border: 2px solid #1D9E75;">·</div>
+        <div class="streak-dot">F</div>
+        <div class="streak-dot">S</div>
+        <div class="streak-dot">S</div>
+      </div>
+      <div class="progress-bar" style="margin-top: 10px;">
+        <div class="progress-fill" style="width: 75%; background: #1D9E75;"></div>
+      </div>
+      <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 6px;">1 more workout to hit goal</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Today's suggestion</div>
+    <div class="suggestion-card" style="border-left: 3px solid #7F77DD; border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;">
+      <div class="row-between">
+        <div>
+          <div style="font-size: 14px; font-weight: 500; color: var(--color-text-primary);">Pull Day — Back & Biceps</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 3px;">60 min · 7 exercises · Last done 2 days ago</div>
+        </div>
+        <button class="btn btn-primary" style="font-size: 12px; padding: 6px 12px;" onclick="sendPrompt('Start the Pull Day workout for me')">Start ↗</button>
+      </div>
+      <div class="row" style="margin-top: 10px; gap: 6px;">
+        <span class="badge badge-purple">Deadlift</span>
+        <span class="badge badge-purple">Barbell row</span>
+        <span class="badge badge-purple">+5 more</span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Body weight</div>
+    <div class="card">
+      <div class="row-between" style="margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 22px; font-weight: 500; color: var(--color-text-primary);">83.4 kg</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary);">Logged today</div>
+        </div>
+        <span class="badge badge-green">▼ 1.2 kg this month</span>
+      </div>
+      <div class="chart-bar-wrap">
+        <div class="bar-col"><div class="bar" style="height: 52px; background: var(--color-background-secondary);"></div><div class="bar-label">W1</div></div>
+        <div class="bar-col"><div class="bar" style="height: 58px; background: var(--color-background-secondary);"></div><div class="bar-label">W2</div></div>
+        <div class="bar-col"><div class="bar" style="height: 55px; background: var(--color-background-secondary);"></div><div class="bar-label">W3</div></div>
+        <div class="bar-col"><div class="bar" style="height: 48px;"></div><div class="bar-label">W4</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKOUT -->
+  <div id="workout" class="screen">
+    <div class="card" style="margin-bottom: 10px;">
+      <div class="row-between">
+        <div>
+          <div style="font-size: 16px; font-weight: 500; color: var(--color-text-primary);">Pull Day</div>
+          <div class="row" style="gap: 8px; margin-top: 4px;">
+            <span style="font-size: 13px; color: var(--color-text-secondary);"><i class="ti ti-clock" style="font-size:13px; vertical-align:-1px;" aria-hidden="true"></i> 38:22</span>
+            <span style="font-size: 13px; color: var(--color-text-secondary);">14/21 sets</span>
+            <span style="font-size: 13px; color: #3B6D11; font-weight: 500;">2,840 kg</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: var(--color-text-tertiary); text-align: right; margin-bottom: 4px;">Volume</div>
+          <div style="font-size: 11px; color: var(--color-text-tertiary);">66% done</div>
+          <div class="progress-bar" style="width: 80px;"><div class="progress-fill" style="width: 66%; background: #1D9E75;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-between" style="margin-bottom: 2px;">
+        <div style="font-size: 15px; font-weight: 500; color: var(--color-text-primary);">Barbell Row</div>
+        <div class="pr-badge"><i class="ti ti-trophy" style="font-size:11px" aria-hidden="true"></i> PR today!</div>
+      </div>
+      <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px;">Back · 4 sets · target: 6–8 reps</div>
+
+      <div style="display: grid; grid-template-columns: 32px 80px 80px 1fr; gap: 6px; font-size: 11px; color: var(--color-text-tertiary); padding: 0 0 6px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 4px;">
+        <div>Set</div><div style="text-align:center">kg</div><div style="text-align:center">Reps</div><div></div>
+      </div>
+
+      <div class="set-row set-done">
+        <div class="check-circle done"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i></div>
+        <input class="input-mini" value="90" readonly>
+        <input class="input-mini" value="8" readonly>
+        <span style="font-size:11px; color: var(--color-text-tertiary);">prev: 85×8</span>
+      </div>
+      <div class="set-row set-done">
+        <div class="check-circle done"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i></div>
+        <input class="input-mini" value="90" readonly>
+        <input class="input-mini" value="7" readonly>
+        <span style="font-size:11px; color: var(--color-text-tertiary);">prev: 85×8</span>
+      </div>
+      <div class="set-row">
+        <div class="check-circle" style="border-color: #5DCAA5;"></div>
+        <input class="input-mini" value="90">
+        <input class="input-mini" value="">
+        <span style="font-size:11px; color: #1D9E75; font-weight:500;">Active</span>
+      </div>
+      <div class="set-row">
+        <div class="check-circle"></div>
+        <input class="input-mini" value="90">
+        <input class="input-mini" value="">
+        <span style="font-size:11px; color: var(--color-text-tertiary)">–</span>
+      </div>
+
+      <div style="background: #EEEDFE; border-radius: var(--border-radius-md); padding: 8px 10px; margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+        <i class="ti ti-sparkles" style="font-size:14px; color: #534AB7;" aria-hidden="true"></i>
+        <div style="font-size: 12px; color: #534AB7;">You're 5 kg above last session — great progress! Try 92.5 kg next set if this feels manageable.</div>
+      </div>
+    </div>
+
+    <div class="card" style="background: var(--color-background-secondary);">
+      <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px;"><i class="ti ti-timer" style="font-size:14px; vertical-align:-1px;" aria-hidden="true"></i> Rest timer</div>
+      <div class="timer-display" style="font-size: 36px; padding: 0.5rem 0;">1:23</div>
+      <div class="progress-bar"><div class="progress-fill" style="width: 46%; background: #1D9E75;"></div></div>
+      <div class="timer-btns" style="margin-top: 10px;">
+        <button class="btn" style="font-size:12px">30s</button>
+        <button class="btn" style="font-size:12px">60s</button>
+        <button class="btn" style="font-size:12px; background: #5DCAA5; color: #04342C; border-color: transparent;">90s ✓</button>
+        <button class="btn" style="font-size:12px">2m</button>
+        <button class="btn" style="font-size:12px">3m</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI COACH -->
+  <div id="ai" class="screen">
+    <div class="card" style="border-left: 3px solid #7F77DD; border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0; margin-bottom: 1rem;">
+      <div class="row" style="margin-bottom: 8px;">
+        <div class="ai-chip"><i class="ti ti-sparkles" aria-hidden="true"></i> AI coach</div>
+        <span style="font-size: 12px; color: var(--color-text-tertiary);">Based on your last 8 weeks</span>
+      </div>
+      <div style="font-size: 13px; color: var(--color-text-primary); line-height: 1.6;">Your chest lags behind your back (push/pull imbalance detected). Consider adding a second chest session or increasing incline press volume by 1–2 sets.</div>
+      <button class="btn" style="margin-top: 10px; font-size: 12px;" onclick="sendPrompt('Create a balanced push/pull program to fix my chest-to-back imbalance')">Build a fix plan ↗</button>
+    </div>
+
+    <div class="section-title">Suggested next workouts</div>
+    <div class="suggestion-card">
+      <div class="row-between">
+        <div>
+          <div style="font-size: 14px; font-weight: 500; color: var(--color-text-primary);">Upper power — chest focus</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;">55 min · Addresses imbalance</div>
+        </div>
+        <span class="badge badge-purple">Recommended</span>
+      </div>
+    </div>
+    <div class="suggestion-card">
+      <div class="row-between">
+        <div>
+          <div style="font-size: 14px; font-weight: 500; color: var(--color-text-primary);">Deload week — full body</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;">40 min · Recovery focus</div>
+        </div>
+        <span class="badge badge-blue">Recovery</span>
+      </div>
+    </div>
+    <div class="suggestion-card">
+      <div class="row-between">
+        <div>
+          <div style="font-size: 14px; font-weight: 500; color: var(--color-text-primary);">Leg hypertrophy</div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;">65 min · 6 days since last</div>
+        </div>
+        <span class="badge badge-amber">Due soon</span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Muscle balance heatmap</div>
+    <div class="card">
+      <div class="muscle-map">
+        <div class="muscle-item">
+          <div class="muscle-dot" style="background: #1D9E75;"></div>
+          <div class="muscle-name">Back</div>
+          <div class="muscle-pct">38%</div>
+        </div>
+        <div class="muscle-item">
+          <div class="muscle-dot" style="background: #7F77DD;"></div>
+          <div class="muscle-name">Chest</div>
+          <div class="muscle-pct" style="color: #993C1D;">19% ⚠</div>
+        </div>
+        <div class="muscle-item">
+          <div class="muscle-dot" style="background: #5DCAA5;"></div>
+          <div class="muscle-name">Legs</div>
+          <div class="muscle-pct">22%</div>
+        </div>
+        <div class="muscle-item">
+          <div class="muscle-dot" style="background: #EF9F27;"></div>
+          <div class="muscle-name">Shoulders</div>
+          <div class="muscle-pct">12%</div>
+        </div>
+        <div class="muscle-item">
+          <div class="muscle-dot" style="background: #AFA9EC;"></div>
+          <div class="muscle-name">Arms</div>
+          <div class="muscle-pct">9%</div>
+        </div>
+      </div>
+      <button class="btn" style="width: 100%; margin-top: 10px; font-size: 12px;" onclick="sendPrompt('What exercises should I add to fix my muscle imbalance?')">Get exercise recommendations ↗</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="progress" class="screen">
+    <div class="metric-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="metric">
+        <div class="metric-label">Bench PR</div>
+        <div class="metric-value">107.5 kg</div>
+        <div class="metric-sub"><span class="badge badge-green" style="font-size:10px;">+5 this month</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Deadlift PR</div>
+        <div class="metric-value">160 kg</div>
+        <div class="metric-sub"><span class="badge badge-green" style="font-size:10px;">+10 this month</span></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Volume by week (tonnes)</div>
+    <div class="card" style="padding-bottom: 0.5rem;">
+      <div style="position: relative; width: 100%; height: 180px;">
+        <canvas id="volChart" role="img" aria-label="Bar chart of weekly training volume in tonnes over 8 weeks, trending upward from 6 to 9.2 tonnes">Weekly volume: W1 6.0t, W2 6.8t, W3 5.2t, W4 7.4t, W5 8.1t, W6 7.9t, W7 8.8t, W8 9.2t</canvas>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Strength trend — bench press</div>
+    <div class="card" style="padding-bottom: 0.5rem;">
+      <div style="position: relative; width: 100%; height: 160px;">
+        <canvas id="strengthChart" role="img" aria-label="Line chart of bench press 1RM estimate over 8 sessions, rising from 95 to 107.5 kg">Bench: S1 95, S2 97.5, S3 97.5, S4 100, S5 102.5, S6 102.5, S7 105, S8 107.5 kg</canvas>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;">Body weight</div>
+    <div class="card" style="padding-bottom: 0.5rem;">
+      <div style="position: relative; width: 100%; height: 140px;">
+        <canvas id="bwChart" role="img" aria-label="Line chart of body weight over 4 weeks, decreasing from 84.6 to 83.4 kg">Body weight: W1 84.6, W2 84.2, W3 83.8, W4 83.4 kg</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL -->
+  <div id="social" class="screen">
+    <div class="section-title">Share your workout</div>
+    <div class="share-card">
+      <div style="font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px;">Pull Day · 62 min</div>
+      <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">Today · 7 exercises · 21 sets</div>
+      <div class="share-grid">
+        <div class="share-stat">
+          <div style="font-size: 20px; font-weight: 500; color: var(--color-text-primary);">4,820</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary);">kg volume</div>
+        </div>
+        <div class="share-stat">
+          <div style="font-size: 20px; font-weight: 500; color: var(--color-text-primary);">2 PRs</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary);">personal records</div>
+        </div>
+        <div class="share-stat">
+          <div style="font-size: 20px; font-weight: 500; color: var(--color-text-primary);">12🔥</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary);">day streak</div>
+        </div>
+        <div class="share-stat">
+          <div style="font-size: 20px; font-weight: 500; color: var(--color-text-primary);">160 kg</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary);">deadlift PR</div>
+        </div>
+      </div>
+      <div style="margin-top: 10px; display: flex; gap: 8px;">
+        <button class="btn" style="flex: 1; font-size: 12px;"><i class="ti ti-copy" style="font-size:13px; vertical-align:-1px;" aria-hidden="true"></i> Copy image</button>
+        <button class="btn btn-primary" style="flex: 1; font-size: 12px;"><i class="ti ti-share" style="font-size:13px; vertical-align:-1px;" aria-hidden="true"></i> Share</button>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 1.5rem;">Friends activity</div>
+    <div class="exercise-row">
+      <div class="avatar" style="background: #EEEDFE; color: #534AB7; font-size:13px; font-weight:500;">JM</div>
+      <div style="flex: 1;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Jake M. finished Push Day</div>
+        <div style="font-size: 12px; color: var(--color-text-secondary);">2 hours ago · 52 min · 3,400 kg</div>
+      </div>
+      <span class="badge badge-blue">+1 PR</span>
+    </div>
+    <div class="exercise-row">
+      <div class="avatar" style="background: #E1F5EE; color: #0F6E56; font-size:13px; font-weight:500;">SR</div>
+      <div style="flex: 1;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Sarah R. hit a squat PR</div>
+        <div style="font-size: 12px; color: var(--color-text-secondary);">5 hours ago · 120 kg</div>
+      </div>
+      <span class="badge badge-amber">🏆 PR</span>
+    </div>
+    <div class="exercise-row" style="border-bottom: none;">
+      <div class="avatar" style="background: #FAECE7; color: #993C1D; font-size:13px; font-weight:500;">AL</div>
+      <div style="flex: 1;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary);">Alex L. completed Leg Day</div>
+        <div style="font-size: 12px; color: var(--color-text-secondary);">Yesterday · 70 min</div>
+      </div>
+    </div>
+
+    <button class="btn" style="width: 100%; margin-top: 1rem; font-size: 12px;" onclick="sendPrompt('Add a friends/social leaderboard to my GymTrack app')">Add leaderboard feature ↗</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const textColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const baseOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: false }
+  }
+};
+
+new Chart(document.getElementById('volChart'), {
+  type: 'bar',
+  data: {
+    labels: ['W1','W2','W3','W4','W5','W6','W7','W8'],
+    datasets: [{ data: [6.0,6.8,5.2,7.4,8.1,7.9,8.8,9.2], backgroundColor: '#5DCAA5', borderRadius: 4 }]
+  },
+  options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, beginAtZero: true, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + 't' } } } }
+});
+
+new Chart(document.getElementById('strengthChart'), {
+  type: 'line',
+  data: {
+    labels: ['S1','S2','S3','S4','S5','S6','S7','S8'],
+    datasets: [{ data: [95,97.5,97.5,100,102.5,102.5,105,107.5], borderColor: '#7F77DD', backgroundColor: 'rgba(127,119,221,0.08)', tension: 0.35, pointRadius: 3, pointBackgroundColor: '#7F77DD', fill: true }]
+  },
+  options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, min: 90, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + 'kg' } } } }
+});
+
+new Chart(document.getElementById('bwChart'), {
+  type: 'line',
+  data: {
+    labels: ['W1','W2','W3','W4'],
+    datasets: [{ data: [84.6,84.2,83.8,83.4], borderColor: '#EF9F27', backgroundColor: 'rgba(239,159,39,0.08)', tension: 0.35, pointRadius: 4, pointBackgroundColor: '#EF9F27', fill: true }]
+  },
+  options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, min: 82, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + 'kg' } } } }
+});
+</script>
