@@ -20,7 +20,7 @@ export function TemplateCard({ template, onStart }: TemplateCardProps) {
   const exerciseNames = template.exercises
     .slice(0, 3)
     .map((e) => getExerciseById(e.exerciseId)?.name ?? e.exerciseId)
-    .join(", ");
+    .join("  ·  ");
 
   const handleStart = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -30,71 +30,88 @@ export function TemplateCard({ template, onStart }: TemplateCardProps) {
   const handleDelete = () => {
     Alert.alert("Delete Template", `Remove "${template.name}"?`, [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteTemplate(template.id),
-      },
+      { text: "Delete", style: "destructive", onPress: () => deleteTemplate(template.id) },
     ]);
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.name, { color: colors.foreground }]}>
-            {template.name}
-          </Text>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+    >
+      <View
+        style={[
+          styles.accentBar,
+          { backgroundColor: template.isCustom ? colors.mutedForeground : colors.primary },
+        ]}
+      />
+      <View style={styles.inner}>
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <Text style={[styles.name, { color: colors.foreground }]}>
+              {template.name}
+            </Text>
+            {template.isCustom && (
+              <View style={[styles.customBadge, { backgroundColor: colors.muted }]}>
+                <Text style={[styles.customText, { color: colors.mutedForeground }]}>
+                  Custom
+                </Text>
+              </View>
+            )}
+          </View>
           {template.isCustom && (
-            <View style={[styles.customBadge, { backgroundColor: colors.primary + "22" }]}>
-              <Text style={[styles.customText, { color: colors.primary }]}>Custom</Text>
-            </View>
+            <Pressable onPress={handleDelete} hitSlop={10}>
+              <Ionicons name="trash-outline" size={17} color={colors.mutedForeground} />
+            </Pressable>
           )}
         </View>
-        {template.isCustom && (
-          <Pressable onPress={handleDelete} hitSlop={8}>
-            <Ionicons name="trash-outline" size={18} color={colors.destructive} />
-          </Pressable>
+
+        {template.description && (
+          <Text style={[styles.description, { color: colors.mutedForeground }]}>
+            {template.description}
+          </Text>
         )}
-      </View>
 
-      {template.description && (
-        <Text style={[styles.description, { color: colors.mutedForeground }]}>
-          {template.description}
-        </Text>
-      )}
-
-      <Text style={[styles.exercises, { color: colors.mutedForeground }]} numberOfLines={1}>
-        {exerciseNames}
-        {template.exercises.length > 3 ? ` +${template.exercises.length - 3} more` : ""}
-      </Text>
-
-      <View style={styles.footer}>
-        <View style={styles.meta}>
-          <Ionicons name="barbell-outline" size={13} color={colors.mutedForeground} />
-          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-            {template.exercises.length} exercises
-          </Text>
-          {template.estimatedDuration && (
-            <>
-              <Ionicons name="time-outline" size={13} color={colors.mutedForeground} />
-              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-                ~{template.estimatedDuration} min
-              </Text>
-            </>
-          )}
-        </View>
-        <Pressable
-          style={({ pressed }) => [
-            styles.startBtn,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-          ]}
-          onPress={handleStart}
+        <Text
+          style={[styles.exercises, { color: colors.mutedForeground }]}
+          numberOfLines={1}
         >
-          <Text style={[styles.startText, { color: colors.primaryForeground }]}>
-            Start
-          </Text>
-        </Pressable>
+          {exerciseNames}
+          {template.exercises.length > 3 ? `  +${template.exercises.length - 3}` : ""}
+        </Text>
+
+        <View style={styles.footer}>
+          <View style={styles.meta}>
+            <View style={[styles.metaPill, { backgroundColor: colors.muted }]}>
+              <Ionicons name="barbell-outline" size={12} color={colors.mutedForeground} />
+              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+                {template.exercises.length} exercises
+              </Text>
+            </View>
+            {template.estimatedDuration && (
+              <View style={[styles.metaPill, { backgroundColor: colors.muted }]}>
+                <Ionicons name="time-outline" size={12} color={colors.mutedForeground} />
+                <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+                  ~{template.estimatedDuration} min
+                </Text>
+              </View>
+            )}
+          </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.startBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            ]}
+            onPress={handleStart}
+          >
+            <Text style={[styles.startText, { color: colors.primaryForeground }]}>
+              Start
+            </Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.primaryForeground} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -104,9 +121,17 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 14,
     borderWidth: 1,
+    marginBottom: 12,
+    flexDirection: "row",
+    overflow: "hidden",
+  },
+  accentBar: {
+    width: 4,
+  },
+  inner: {
+    flex: 1,
     padding: 16,
     gap: 8,
-    marginBottom: 12,
   },
   header: {
     flexDirection: "row",
@@ -136,6 +161,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
+    lineHeight: 18,
   },
   exercises: {
     fontSize: 12,
@@ -145,26 +171,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 2,
   },
   meta: {
     flexDirection: "row",
+    gap: 6,
+  },
+  metaPill: {
+    flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
   metaText: {
-    fontSize: 12,
-    marginRight: 6,
-    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
   },
   startBtn: {
-    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
   },
   startText: {
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
   },
 });

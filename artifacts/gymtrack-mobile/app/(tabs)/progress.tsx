@@ -34,7 +34,7 @@ function VolumeChart({ workouts, colors }: { workouts: Workout[]; colors: any })
         }
       }
       days.push({
-        label: d.toLocaleDateString("en-US", { weekday: "short" }).charAt(0),
+        label: d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2),
         volume: vol,
       });
     }
@@ -43,28 +43,46 @@ function VolumeChart({ workouts, colors }: { workouts: Workout[]; colors: any })
 
   const maxVol = Math.max(...last7.map((d) => d.volume), 1);
 
+  function fmtVol(v: number) {
+    if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
+    return String(v);
+  }
+
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 4 }}>
       <View style={chartStyles.bars}>
-        {last7.map((day, i) => (
-          <View key={i} style={chartStyles.barCol}>
-            <View style={chartStyles.barTrack}>
-              <View
+        {last7.map((day, i) => {
+          const pct = day.volume / maxVol;
+          const isActive = day.volume > 0;
+          return (
+            <View key={i} style={chartStyles.barCol}>
+              {isActive && (
+                <Text style={[chartStyles.volLabel, { color: colors.primary }]}>
+                  {fmtVol(day.volume)}
+                </Text>
+              )}
+              <View style={chartStyles.barTrack}>
+                <View
+                  style={[
+                    chartStyles.barFill,
+                    {
+                      height: `${Math.max(pct * 100, isActive ? 6 : 0)}%`,
+                      backgroundColor: isActive ? colors.primary : colors.muted,
+                    },
+                  ]}
+                />
+              </View>
+              <Text
                 style={[
-                  chartStyles.barFill,
-                  {
-                    height: `${(day.volume / maxVol) * 100}%`,
-                    backgroundColor:
-                      day.volume > 0 ? colors.primary : colors.muted,
-                  },
+                  chartStyles.barLabel,
+                  { color: isActive ? colors.foreground : colors.mutedForeground },
                 ]}
-              />
+              >
+                {day.label}
+              </Text>
             </View>
-            <Text style={[chartStyles.barLabel, { color: colors.mutedForeground }]}>
-              {day.label}
-            </Text>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
@@ -75,18 +93,32 @@ const chartStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    height: 100,
-    paddingBottom: 24,
+    height: 130,
+    paddingBottom: 22,
   },
-  barCol: { flex: 1, alignItems: "center", gap: 4 },
+  barCol: { flex: 1, alignItems: "center", gap: 3 },
   barTrack: {
     flex: 1,
-    width: "70%",
+    width: "55%",
     justifyContent: "flex-end",
-    backgroundColor: "transparent",
   },
-  barFill: { borderRadius: 4, width: "100%" },
-  barLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  barFill: {
+    borderRadius: 5,
+    width: "100%",
+  },
+  barLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    fontWeight: "600",
+    position: "absolute",
+    bottom: 0,
+  },
+  volLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+    marginBottom: 2,
+  },
 });
 
 export default function ProgressScreen() {
@@ -119,53 +151,75 @@ export default function ProgressScreen() {
     >
       <Text style={[styles.title, { color: colors.foreground }]}>Progress</Text>
 
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-          Weekly Volume
-        </Text>
-        <VolumeChart workouts={workouts} colors={colors} />
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.primary }]}>
+      {/* Summary strip */}
+      <View style={styles.summaryRow}>
+        <View style={[styles.summaryBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.summaryValue, { color: colors.primary }]}>
             {stats.totalWorkouts}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
             Workouts
           </Text>
         </View>
-        <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.primary }]}>
+        <View style={[styles.summaryBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.summaryValue, { color: colors.primary }]}>
             {stats.currentStreak}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
             Streak
           </Text>
         </View>
-        <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.primary }]}>
+        <View style={[styles.summaryBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.summaryValue, { color: colors.primary }]}>
             {personalRecords.length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+          <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
             PRs
           </Text>
         </View>
       </View>
 
+      {/* Volume Chart */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+            Weekly Volume
+          </Text>
+          <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+            Last 7 days
+          </Text>
+        </View>
+        <VolumeChart workouts={workouts} colors={colors} />
+      </View>
+
+      {/* Personal Records */}
       {personalRecords.length > 0 && (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-            Personal Records
-          </Text>
-          {personalRecords.slice(0, 5).map((pr) => {
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              Personal Records
+            </Text>
+            <View style={[styles.prCountBadge, { backgroundColor: colors.primary + "22" }]}>
+              <Text style={[styles.prCountText, { color: colors.primary }]}>
+                {personalRecords.length}
+              </Text>
+            </View>
+          </View>
+          {personalRecords.slice(0, 6).map((pr, idx) => {
             const ex = getExerciseById(pr.exerciseId);
             return (
               <View
                 key={pr.exerciseId}
-                style={[styles.prRow, { borderColor: colors.border }]}
+                style={[
+                  styles.prRow,
+                  { borderColor: colors.border },
+                  idx === personalRecords.slice(0, 6).length - 1 && { borderBottomWidth: 0 },
+                ]}
               >
-                <View>
+                <View style={[styles.prRank, { backgroundColor: colors.muted }]}>
+                  <Ionicons name="trophy" size={12} color={colors.primary} />
+                </View>
+                <View style={styles.prInfo}>
                   <Text style={[styles.prName, { color: colors.foreground }]}>
                     {ex?.name ?? pr.exerciseId}
                   </Text>
@@ -176,11 +230,9 @@ export default function ProgressScreen() {
                     })}
                   </Text>
                 </View>
-                <View
-                  style={[styles.prBadge, { backgroundColor: colors.primary + "22" }]}
-                >
+                <View style={[styles.prBadge, { backgroundColor: colors.primary + "20" }]}>
                   <Text style={[styles.prValue, { color: colors.primary }]}>
-                    {pr.weight} kg × {pr.reps}
+                    {pr.weight}kg × {pr.reps}
                   </Text>
                 </View>
               </View>
@@ -189,20 +241,38 @@ export default function ProgressScreen() {
         </View>
       )}
 
+      {/* Workout History */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[styles.cardTitle, { color: colors.foreground }]}>
           Workout History
         </Text>
         {workouts.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="calendar-outline" size={36} color={colors.muted} />
+            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
+              <Ionicons name="calendar-outline" size={28} color={colors.mutedForeground} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+              No workouts yet
+            </Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              No workouts logged yet
+              Complete a workout to see it here
             </Text>
           </View>
         ) : (
-          workouts.slice(0, 10).map((w) => (
-            <View key={w.id} style={[styles.historyRow, { borderColor: colors.border }]}>
+          workouts.slice(0, 10).map((w, idx) => (
+            <View
+              key={w.id}
+              style={[
+                styles.historyRow,
+                { borderColor: colors.border },
+                idx === workouts.slice(0, 10).length - 1 && { borderBottomWidth: 0 },
+              ]}
+            >
+              <View
+                style={[styles.historyDot, { backgroundColor: colors.primary + "30" }]}
+              >
+                <View style={[styles.historyDotInner, { backgroundColor: colors.primary }]} />
+              </View>
               <View style={styles.historyLeft}>
                 <Text style={[styles.historyName, { color: colors.foreground }]}>
                   {w.name}
@@ -213,19 +283,12 @@ export default function ProgressScreen() {
                     month: "short",
                     day: "numeric",
                   })}
-                  {w.duration ? ` · ${w.duration} min` : ""}
+                  {w.duration ? ` · ${w.duration}m` : ""}
                   {" · "}{w.exercises.length} exercises
                 </Text>
               </View>
-              <Pressable
-                onPress={() => handleDeleteWorkout(w.id, w.name)}
-                hitSlop={8}
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={16}
-                  color={colors.mutedForeground}
-                />
+              <Pressable onPress={() => handleDeleteWorkout(w.id, w.name)} hitSlop={10}>
+                <Ionicons name="trash-outline" size={15} color={colors.mutedForeground} />
               </Pressable>
             </View>
           ))
@@ -237,42 +300,145 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: 16, gap: 14 },
-  title: { fontSize: 24, fontWeight: "800", fontFamily: "Inter_700Bold" },
-  card: { borderRadius: 14, borderWidth: 1, padding: 16, gap: 12 },
-  cardTitle: { fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
-  statsRow: { flexDirection: "row", gap: 10 },
-  statBox: {
+  content: { paddingHorizontal: 16, gap: 12 },
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
+  },
+  summaryRow: { flexDirection: "row", gap: 10 },
+  summaryBox: {
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    padding: 14,
+    paddingVertical: 14,
     alignItems: "center",
     gap: 4,
   },
-  statValue: { fontSize: 26, fontWeight: "800", fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  summaryValue: {
+    fontSize: 28,
+    fontWeight: "800",
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  cardSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+  },
+  prCountBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  prCountText: {
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+  },
   prRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
+    gap: 10,
   },
-  prName: { fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
-  prDate: { fontSize: 11, marginTop: 2, fontFamily: "Inter_400Regular" },
-  prBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  prValue: { fontSize: 13, fontWeight: "700", fontFamily: "Inter_700Bold" },
+  prRank: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  prInfo: { flex: 1, gap: 2 },
+  prName: {
+    fontSize: 14,
+    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
+  },
+  prDate: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+  },
+  prBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  prValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+  },
   historyRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
+    gap: 10,
+  },
+  historyDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   historyLeft: { flex: 1, gap: 2 },
-  historyName: { fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
-  historyMeta: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  empty: { alignItems: "center", paddingVertical: 20, gap: 8 },
-  emptyText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  historyName: {
+    fontSize: 14,
+    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
+  },
+  historyMeta: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+  },
+  empty: { alignItems: "center", paddingVertical: 24, gap: 10 },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+  },
+  emptyText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+  },
 });
