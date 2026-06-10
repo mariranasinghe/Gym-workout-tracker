@@ -1,0 +1,2 @@
+- [Expo dark-always theme](expo-dark-theme.md) — GymTrack Mobile uses dark palette for both light/dark schemes; colors.ts has matching light+dark objects.
+- [Expo UUID pattern](expo-uuid.md) — never use uuid package in Expo; use `Date.now().toString() + Math.random().toString(36).substr(2, 9)` for ID generation.
