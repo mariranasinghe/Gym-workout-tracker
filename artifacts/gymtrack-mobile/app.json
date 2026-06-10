@@ -14,7 +14,8 @@
       "backgroundColor": "#141414"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.replit.gymtrackmobile"
     },
     "android": {
       "backgroundColor": "#141414"
