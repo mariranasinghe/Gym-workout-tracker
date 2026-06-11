@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { WorkoutExercise, WorkoutSet } from '@/types'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SetRow } from './set-row'
 import { getExerciseById } from '@/exercises'
@@ -22,6 +21,8 @@ export function ExerciseEntry({ exercise, onRemove }: ExerciseEntryProps) {
 
   const completedSets = exercise.sets.filter(s => s.completed).length
   const totalSets = exercise.sets.length
+  const allDone = completedSets === totalSets && totalSets > 0
+  const progressPct = totalSets > 0 ? completedSets / totalSets : 0
 
   const handleAddSet = () => {
     const lastSet = exercise.sets[exercise.sets.length - 1]
@@ -59,76 +60,87 @@ export function ExerciseEntry({ exercise, onRemove }: ExerciseEntryProps) {
   }
 
   return (
-    <Card className="bg-card border-border overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center justify-between gap-3 hover:bg-secondary/30 transition-colors"
-      >
-        <div className="flex-1 min-w-0 text-left">
-          <h3 className="font-semibold truncate">{exerciseData.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {completedSets}/{totalSets} sets completed
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className={cn(
-            'px-2 py-1 rounded-full text-xs font-medium',
-            completedSets === totalSets && totalSets > 0
-              ? 'bg-success/20 text-success'
-              : 'bg-muted text-muted-foreground'
-          )}>
-            {completedSets === totalSets && totalSets > 0 ? 'Done' : `${completedSets}/${totalSets}`}
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-          )}
-        </div>
-      </button>
+    <div className="flex overflow-hidden rounded-xl border border-border bg-card">
+      {/* Progress accent bar */}
+      <div className={cn(
+        'w-1 shrink-0 transition-colors',
+        allDone
+          ? 'bg-success'
+          : progressPct > 0
+          ? 'bg-primary'
+          : 'bg-border'
+      )} />
 
-      {isExpanded && (
-        <div className="px-4 pb-4 space-y-2">
-          <div className="flex items-center gap-2 px-3 text-xs text-muted-foreground">
-            <div className="w-8 text-center">Set</div>
-            <div className="w-16 text-center hidden sm:block">Prev</div>
-            <div className="flex-1 text-center">Weight (kg)</div>
-            <div className="flex-1 text-center">Reps</div>
-            <div className="w-10" />
-            <div className="w-10" />
+      <div className="flex-1 min-w-0">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full p-4 flex items-center justify-between gap-3 hover:bg-secondary/30 transition-colors text-left"
+        >
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold truncate">{exerciseData.name}</h3>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mt-0.5">
+              {exerciseData.muscleGroup}
+            </p>
           </div>
-
-          {exercise.sets.map((set, index) => (
-            <SetRow
-              key={set.id}
-              set={set}
-              index={index}
-              onUpdate={(updates) => handleUpdateSet(set.id, updates)}
-              onToggleComplete={() => handleToggleSet(set.id)}
-              onDelete={() => handleDeleteSet(set.id)}
-            />
-          ))}
-
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={handleAddSet}
-              className="flex-1"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Set
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={onRemove}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove
-            </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={cn(
+              'px-2 py-0.5 rounded-full text-xs font-bold',
+              allDone
+                ? 'bg-success/20 text-success'
+                : 'bg-muted text-muted-foreground'
+            )}>
+              {allDone ? 'Done' : `${completedSets}/${totalSets}`}
+            </div>
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            )}
           </div>
-        </div>
-      )}
-    </Card>
+        </button>
+
+        {isExpanded && (
+          <div className="px-4 pb-4 space-y-2">
+            <div className="flex items-center gap-2 px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              <div className="w-8 text-center">Set</div>
+              <div className="w-14 text-center hidden sm:block">Prev</div>
+              <div className="flex-1 text-center">Weight kg</div>
+              <div className="flex-1 text-center">Reps</div>
+              <div className="w-10" />
+              <div className="w-10" />
+            </div>
+
+            {exercise.sets.map((set, index) => (
+              <SetRow
+                key={set.id}
+                set={set}
+                index={index}
+                onUpdate={(updates) => handleUpdateSet(set.id, updates)}
+                onToggleComplete={() => handleToggleSet(set.id)}
+                onDelete={() => handleDeleteSet(set.id)}
+              />
+            ))}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                variant="ghost"
+                onClick={handleAddSet}
+                className="flex-1 h-9 bg-muted/50 hover:bg-muted text-primary font-semibold text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add Set
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={onRemove}
+                className="h-9 px-3 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

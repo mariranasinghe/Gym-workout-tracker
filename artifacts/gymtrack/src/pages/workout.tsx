@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation } from 'wouter'
 import { useWorkout } from '@/store'
-import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import {
   AlertDialog,
@@ -18,7 +16,7 @@ import {
 import { ExerciseEntry } from '@/components/workout/exercise-entry'
 import { AddExerciseDialog } from '@/components/workout/add-exercise-dialog'
 import { RestTimer } from '@/components/workout/rest-timer'
-import { Check, Clock, Play, X, Dumbbell } from 'lucide-react'
+import { Check, Play, X, Dumbbell } from 'lucide-react'
 import { toast } from 'sonner'
 import { Link } from 'wouter'
 
@@ -33,14 +31,10 @@ export default function WorkoutPage() {
 
   useEffect(() => {
     if (!activeWorkout) return
-
     const startTime = new Date(activeWorkout.startTime).getTime()
-    
     const interval = setInterval(() => {
-      const now = Date.now()
-      setElapsed(Math.floor((now - startTime) / 1000))
+      setElapsed(Math.floor((Date.now() - startTime) / 1000))
     }, 1000)
-
     return () => clearInterval(interval)
   }, [activeWorkout])
 
@@ -56,23 +50,18 @@ export default function WorkoutPage() {
     const hrs = Math.floor(seconds / 3600)
     const mins = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    if (hrs > 0) return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
   const handleStartWorkout = () => {
-    dispatch({
-      type: 'START_WORKOUT',
-      payload: { name: 'New Workout' },
-    })
+    dispatch({ type: 'START_WORKOUT', payload: { name: 'New Workout' } })
     toast.success('Workout started!')
   }
 
   const handleFinishWorkout = () => {
     dispatch({ type: 'END_WORKOUT' })
-    toast.success('Workout completed! Great job!')
+    toast.success('Workout completed! Great job! 💪')
     navigate('/progress')
   }
 
@@ -86,39 +75,34 @@ export default function WorkoutPage() {
     dispatch({ type: 'REMOVE_EXERCISE', payload: exerciseId })
   }
 
-  const totalSets = activeWorkout?.exercises.reduce(
-    (acc, ex) => acc + ex.sets.length, 0
-  ) || 0
+  const totalSets = activeWorkout?.exercises.reduce((acc, ex) => acc + ex.sets.length, 0) || 0
   const completedSets = activeWorkout?.exercises.reduce(
     (acc, ex) => acc + ex.sets.filter(s => s.completed).length, 0
   ) || 0
 
   if (!activeWorkout) {
     return (
-      <div className="min-h-screen">
-        <PageHeader title="Workout" />
-        <div className="p-4 flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-            <Dumbbell className="w-10 h-10 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">No Active Workout</h2>
-          <p className="text-muted-foreground text-center mb-6 max-w-xs">
-            Start a new workout or choose from your templates to begin tracking
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 gap-5 pb-24">
+        <div className="w-20 h-20 rounded-2xl bg-card border border-border flex items-center justify-center">
+          <Dumbbell className="w-9 h-9 text-muted-foreground" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl font-extrabold tracking-tight mb-1.5">No Active Workout</h2>
+          <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
+            Log sets, track your volume, and beat your personal records.
           </p>
-          <div className="flex flex-col gap-3 w-full max-w-xs">
-            <Button 
-              onClick={handleStartWorkout}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Start Empty Workout
-            </Button>
-            <Button variant="outline" asChild className="w-full h-12">
-              <Link href="/templates">
-                Choose Template
-              </Link>
-            </Button>
-          </div>
+        </div>
+        <div className="flex flex-col gap-2 w-full max-w-xs">
+          <Button
+            onClick={handleStartWorkout}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-13 text-base font-bold rounded-xl gap-2"
+          >
+            <Play className="w-4 h-4 fill-current" />
+            Start Empty Workout
+          </Button>
+          <Button variant="outline" asChild className="w-full h-11 rounded-xl font-semibold">
+            <Link href="/templates">Use a Template</Link>
+          </Button>
         </div>
       </div>
     )
@@ -126,72 +110,57 @@ export default function WorkoutPage() {
 
   return (
     <div className="min-h-screen">
-      <PageHeader 
-        title={activeWorkout.name}
-        subtitle={`${formatDuration(elapsed)} elapsed`}
-        action={
-          <div className="flex items-center gap-2">
+      {/* Workout top bar */}
+      <header className="sticky top-0 z-40 bg-card/98 backdrop-blur-xl border-b border-border px-4 pt-3 pb-3 safe-area-pt">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {activeWorkout.name}
+            </p>
+            <p className="text-3xl font-extrabold tabular-nums tracking-tight text-foreground leading-none mt-1">
+              {formatDuration(elapsed)}
+            </p>
+            {totalSets > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {completedSets}/{totalSets} sets done
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowCancelDialog(true)}
-              className="text-muted-foreground hover:text-destructive"
+              className="w-9 h-9 text-muted-foreground hover:text-destructive"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => setShowFinishDialog(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 font-bold text-sm gap-1.5 rounded-xl"
+            >
+              <Check className="w-4 h-4" />
+              Finish
             </Button>
           </div>
-        }
-      />
-
-      <main className="p-4 pb-32 space-y-4">
-        <Card className="p-3 bg-card border-border">
-          <div className="flex items-center justify-around">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{activeWorkout.exercises.length}</p>
-              <p className="text-xs text-muted-foreground">Exercises</p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div className="text-center">
-              <p className="text-2xl font-bold">{completedSets}/{totalSets}</p>
-              <p className="text-xs text-muted-foreground">Sets Done</p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <p className="text-2xl font-bold tabular-nums">{formatDuration(elapsed)}</p>
-              </div>
-              <p className="text-xs text-muted-foreground">Duration</p>
-            </div>
-          </div>
-        </Card>
-
-        <div className="space-y-3">
-          {activeWorkout.exercises.map((exercise) => (
-            <ExerciseEntry
-              key={exercise.id}
-              exercise={exercise}
-              onRemove={() => handleRemoveExercise(exercise.id)}
-            />
-          ))}
         </div>
+      </header>
+
+      <main className="p-4 pb-32 space-y-3">
+        {activeWorkout.exercises.map((exercise) => (
+          <ExerciseEntry
+            key={exercise.id}
+            exercise={exercise}
+            onRemove={() => handleRemoveExercise(exercise.id)}
+          />
+        ))}
 
         <AddExerciseDialog />
-
-        {activeWorkout.exercises.length > 0 && (
-          <Button
-            onClick={() => setShowFinishDialog(true)}
-            variant="outline"
-            className="w-full h-12 border-success text-success hover:bg-success hover:text-success-foreground"
-          >
-            <Check className="w-4 h-4 mr-2" />
-            Finish Workout
-          </Button>
-        )}
       </main>
 
       <RestTimer />
 
+      {/* Cancel dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
@@ -202,7 +171,7 @@ export default function WorkoutPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep Training</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleCancelWorkout}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -212,6 +181,7 @@ export default function WorkoutPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Finish dialog */}
       <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
@@ -222,7 +192,7 @@ export default function WorkoutPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep Training</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleFinishWorkout}
               className="bg-success text-success-foreground hover:bg-success/90"
             >

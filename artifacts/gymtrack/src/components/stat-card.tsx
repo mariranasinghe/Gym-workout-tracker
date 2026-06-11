@@ -11,30 +11,36 @@ interface StatCardProps {
 }
 
 export function StatCard({ label, value, icon: Icon, trend, className }: StatCardProps) {
+  const isPositive = trend === 'up'
+
   return (
     <Card className={cn(
-      'p-4 bg-card border-border',
+      'p-4 bg-card border-border border-t-2 transition-colors',
+      isPositive ? 'border-t-primary' : 'border-t-border',
       className
     )}>
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {label}
-          </p>
-          <p className={cn(
-            'text-2xl font-bold tabular-nums',
-            trend === 'up' && 'text-success',
-            trend === 'down' && 'text-destructive'
-          )}>
-            {value}
-          </p>
-        </div>
+      <div className="flex items-start justify-between mb-2">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          {label}
+        </p>
         {Icon && (
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Icon className="w-5 h-5 text-primary" />
+          <div className={cn(
+            'p-1.5 rounded-lg',
+            isPositive ? 'bg-primary/15' : 'bg-secondary'
+          )}>
+            <Icon className={cn(
+              'w-4 h-4',
+              isPositive ? 'text-primary' : 'text-muted-foreground'
+            )} />
           </div>
         )}
       </div>
+      <p className={cn(
+        'text-3xl font-extrabold tabular-nums tracking-tight',
+        isPositive && 'text-primary'
+      )}>
+        {value}
+      </p>
     </Card>
   )
 }

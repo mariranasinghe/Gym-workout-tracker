@@ -1,21 +1,35 @@
 import { useWorkout } from '@/store'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/stat-card'
+import { Button } from '@/components/ui/button'
 import { getExerciseById } from '@/exercises'
 import { Spinner } from '@/components/ui/spinner'
-import { 
-  Dumbbell, 
-  Flame, 
-  Play, 
-  Target, 
+import {
+  Dumbbell,
+  Flame,
+  Play,
+  Target,
   TrendingUp,
   ChevronRight,
   Zap,
-  Calendar
+  Calendar,
+  CheckCircle2,
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good Morning'
+  if (h < 18) return 'Good Afternoon'
+  return 'Good Evening'
+}
+
+function formatVolume(volume: number) {
+  if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`
+  if (volume >= 1000) return `${(volume / 1000).toFixed(1)}k`
+  return volume.toString()
+}
 
 export default function HomePage() {
   const { state, dispatch } = useWorkout()
@@ -34,213 +48,240 @@ export default function HomePage() {
       navigate('/workout')
       return
     }
-    dispatch({
-      type: 'START_WORKOUT',
-      payload: { name: 'Quick Workout' },
-    })
+    dispatch({ type: 'START_WORKOUT', payload: { name: 'Quick Workout' } })
     toast.success('Workout started!')
     navigate('/workout')
   }
 
   const lastWorkout = state.workoutHistory[0]
-  const weeklyProgress = Math.round((state.stats.workoutsThisWeek / state.stats.weeklyGoal) * 100)
+  const weeklyProgress = Math.min(
+    Math.round((state.stats.workoutsThisWeek / state.stats.weeklyGoal) * 100),
+    100
+  )
 
-  const formatVolume = (volume: number) => {
-    if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`
-    if (volume >= 1000) return `${(volume / 1000).toFixed(1)}K`
-    return volume.toString()
-  }
+  const today = new Date()
+  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - today.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  const workoutDays = new Set(
+    state.workoutHistory
+      .filter((w) => new Date(w.date) >= startOfWeek)
+      .map((w) => new Date(w.date).getDay())
+  )
 
   return (
     <div className="min-h-screen">
+      {/* Header */}
       <header className="px-4 pt-6 pb-4 safe-area-pt">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Welcome back</p>
-            <h1 className="text-2xl font-bold">
-              {new Date().getHours() < 12 ? 'Good Morning' : 
-               new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}
-            </h1>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+              {greeting()}
+            </p>
+            <h1 className="text-3xl font-extrabold tracking-tight mt-0.5">GymTrack</h1>
           </div>
-          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-            <Dumbbell className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-2 bg-primary/15 px-3 py-1.5 rounded-full">
+            <Flame className="w-4 h-4 text-primary" />
+            <span className="font-bold text-primary text-sm">{state.stats.currentStreak}</span>
           </div>
         </div>
       </header>
 
-      <main className="px-4 pb-24 space-y-6">
+      <main className="px-4 pb-28 space-y-5">
+        {/* Active workout banner */}
         {state.activeWorkout && (
           <Link href="/workout">
-            <Card className="p-4 bg-primary/10 border-primary/30 hover:bg-primary/15 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">{state.activeWorkout.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {state.activeWorkout.exercises.length} exercises
-                    </p>
-                  </div>
+            <div className="flex items-center justify-between bg-primary rounded-2xl p-4 active:opacity-90 transition-opacity">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <Button size="sm" className="bg-primary text-primary-foreground">
-                  Continue
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                <div>
+                  <p className="font-bold text-primary-foreground text-sm">Workout in progress</p>
+                  <p className="text-xs text-primary-foreground/70">
+                    {state.activeWorkout.name} · {state.activeWorkout.exercises.length} exercises
+                  </p>
+                </div>
               </div>
-            </Card>
+              <ChevronRight className="w-5 h-5 text-primary-foreground/80" />
+            </div>
           </Link>
         )}
 
+        {/* CTA */}
         {!state.activeWorkout && (
-          <Card className="p-6 bg-gradient-to-br from-primary/20 to-primary/5 border-primary/20">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-bold mb-1">Ready to train?</h2>
-                <p className="text-sm text-muted-foreground">
-                  Start an empty workout or pick a template
-                </p>
-              </div>
-              <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
-                <Play className="w-7 h-7 text-primary-foreground ml-1" />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleQuickStart}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-11"
-              >
-                Quick Start
-              </Button>
-              <Button 
-                variant="outline" 
-                asChild
-                className="flex-1 h-11"
-              >
-                <Link href="/templates">
-                  Templates
-                </Link>
-              </Button>
-            </div>
-          </Card>
+          <div className="space-y-2">
+            <Button
+              onClick={handleQuickStart}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-base font-bold rounded-2xl gap-2"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              Start Empty Workout
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              className="w-full h-11 rounded-xl font-semibold"
+            >
+              <Link href="/templates">Browse Templates</Link>
+            </Button>
+          </div>
         )}
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Weekly Goal</h2>
-            <span className="text-sm text-muted-foreground">
-              {state.stats.workoutsThisWeek} of {state.stats.weeklyGoal} workouts
-            </span>
-          </div>
-          <Card className="p-4 bg-card border-border">
-            <div className="flex items-center gap-3 mb-3">
-              {Array.from({ length: state.stats.weeklyGoal }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`flex-1 h-3 rounded-full transition-colors ${
-                    i < state.stats.workoutsThisWeek 
-                      ? 'bg-primary' 
-                      : 'bg-secondary'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {weeklyProgress >= 100 
-                ? 'Goal achieved! Great work!' 
-                : `${state.stats.weeklyGoal - state.stats.workoutsThisWeek} more to go`}
+        {/* This Week */}
+        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              This Week
             </p>
-          </Card>
+            <p className="text-sm font-bold">
+              {state.stats.workoutsThisWeek}
+              <span className="text-muted-foreground font-normal text-xs">/{state.stats.weeklyGoal} goal</span>
+            </p>
+          </div>
+
+          {/* Day circles */}
+          <div className="flex justify-between">
+            {weekDays.map((day, i) => {
+              const isToday = i === today.getDay()
+              const done = workoutDays.has(i)
+              return (
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <span className={cn(
+                    'text-[10px] font-semibold uppercase',
+                    isToday ? 'text-primary' : 'text-muted-foreground'
+                  )}>
+                    {day}
+                  </span>
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                    done
+                      ? 'bg-success'
+                      : isToday
+                      ? 'bg-primary/25 border border-primary'
+                      : 'bg-muted'
+                  )}>
+                    {done && <CheckCircle2 className="w-4 h-4 text-success-foreground fill-none" />}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-success rounded-full transition-all duration-500"
+              style={{ width: `${weeklyProgress}%` }}
+            />
+          </div>
         </div>
 
+        {/* Stats grid */}
         <div>
-          <h2 className="font-semibold mb-3">Your Stats</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+            Your Stats
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            <StatCard 
-              label="Total Workouts" 
+            <StatCard
+              label="Total Workouts"
               value={state.stats.totalWorkouts}
               icon={Calendar}
             />
-            <StatCard 
-              label="Current Streak" 
+            <StatCard
+              label="Current Streak"
               value={`${state.stats.currentStreak} days`}
               icon={Flame}
               trend={state.stats.currentStreak > 0 ? 'up' : 'neutral'}
             />
-            <StatCard 
-              label="Total Volume" 
+            <StatCard
+              label="Total Volume"
               value={`${formatVolume(state.stats.totalVolume)} kg`}
               icon={TrendingUp}
             />
-            <StatCard 
-              label="Weekly Goal" 
-              value={`${Math.min(weeklyProgress, 100)}%`}
+            <StatCard
+              label="Weekly Goal"
+              value={`${weeklyProgress}%`}
               icon={Target}
               trend={weeklyProgress >= 100 ? 'up' : 'neutral'}
             />
           </div>
         </div>
 
+        {/* Last Workout */}
         {lastWorkout && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Last Workout</h2>
-              <Link href="/progress" className="text-sm text-primary">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Last Workout
+              </p>
+              <Link href="/progress" className="text-xs text-primary font-semibold">
                 View all
               </Link>
             </div>
-            <Card className="p-4 bg-card border-border">
-              <div className="flex items-start justify-between mb-3">
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+              <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold">{lastWorkout.name}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-bold text-primary">{lastWorkout.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {new Date(lastWorkout.date).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
                     })}
-                    {lastWorkout.duration && ` - ${lastWorkout.duration} min`}
+                    {lastWorkout.duration ? ` · ${lastWorkout.duration} min` : ''}
                   </p>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {lastWorkout.exercises.slice(0, 3).map((ex) => {
                   const exercise = getExerciseById(ex.exerciseId)
                   const completedSets = ex.sets.filter(s => s.completed).length
                   return (
-                    <div key={ex.id} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{exercise?.name}</span>
-                      <span>{completedSets} sets</span>
+                    <div key={ex.id} className="flex items-center justify-between text-sm py-1.5 border-b border-border last:border-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-border" />
+                        <span className="font-medium">{exercise?.name}</span>
+                      </div>
+                      <span className="text-muted-foreground text-xs">{completedSets} sets</span>
                     </div>
                   )
                 })}
                 {lastWorkout.exercises.length > 3 && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground pt-1 text-center">
                     +{lastWorkout.exercises.length - 3} more exercises
                   </p>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
         )}
 
+        {/* Quick Actions */}
         <div>
-          <h2 className="font-semibold mb-3">Quick Actions</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+            Quick Actions
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <Link href="/exercises">
-              <Card className="p-4 bg-card border-border hover:bg-secondary/50 transition-colors">
-                <Dumbbell className="w-6 h-6 text-primary mb-2" />
-                <h3 className="font-medium">Exercise Library</h3>
-                <p className="text-xs text-muted-foreground">Browse 50+ exercises</p>
-              </Card>
+              <div className="bg-card border border-border rounded-2xl p-4 hover:bg-secondary/30 transition-colors active:scale-[0.98]">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
+                  <Dumbbell className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-sm">Exercise Library</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Browse 50+ exercises</p>
+              </div>
             </Link>
             <Link href="/progress">
-              <Card className="p-4 bg-card border-border hover:bg-secondary/50 transition-colors">
-                <TrendingUp className="w-6 h-6 text-primary mb-2" />
-                <h3 className="font-medium">Progress</h3>
-                <p className="text-xs text-muted-foreground">Track your gains</p>
-              </Card>
+              <div className="bg-card border border-border rounded-2xl p-4 hover:bg-secondary/30 transition-colors active:scale-[0.98]">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-sm">Progress</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Track your gains</p>
+              </div>
             </Link>
           </div>
         </div>
